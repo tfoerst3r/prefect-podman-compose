@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 Thomas Foerster <noreply@tfoerster.de>
+#
+# SPDX-License-Identifier: MIT
+include:
+  - path: ./compose/postgres-compose.yml
+  - path: ./compose/prefect-compose.yml
+
+

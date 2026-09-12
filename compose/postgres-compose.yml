@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2026 Thomas Foerster <noreply@tfoerster.de>
+#
+# SPDX-License-Identifier: MIT
+services:
+  postgres:
+    image: docker.io/library/postgres:18-alpine
+    container_name: postgres-dep
+    restart: always
+    env_file:
+      - ./secrets/postgres.env
+      - ./secrets/prefect.env
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./scripts/init_postgres_dbs.sh:/docker-entrypoint-initdb.d/init.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${PREFECT_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+

@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Thomas Foerster <noreply@tfoerster.de>
+#
+# SPDX-License-Identifier: MIT
+services:
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    container_name: prefect-server
+    restart: always
+    env_file:
+      - ./secrets/system.env
+      - ./secrets/prefect.env
+      - ./secrets/postgres.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./scripts/init_prefect.sh:/init_prefect.sh
+      - ./scripts/prefect:/init_scripts
+    command: >
+      /bin/bash -c "source /init_prefect.sh && exec prefect server start --host 0.0.0.0"
+    ports:
+      - "${PREFECT_PORT}:4200"
+
