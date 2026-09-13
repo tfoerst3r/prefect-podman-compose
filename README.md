@@ -48,7 +48,17 @@ podman exec -it $(podman ps -q -f name=prefect) /bin/bash
 
 ### Running CLI `prefect` 
 
-UNDER CONSTRUCTION
+First you need to install the needed packages. They locally sourced (meaning they are installed in the root folder via `.env/`). Run:
+
+```bash
+poetry install
+```
+
+Now you can run the installed module, which is defined in `src/`:
+
+```bash
+poetry run python -m prefectflow
+```
 
 <!-- ---- -->
 
