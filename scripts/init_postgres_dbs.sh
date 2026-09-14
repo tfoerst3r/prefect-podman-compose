@@ -76,19 +76,42 @@ for DB in "${POSTGRES_DBS[@]}"; do
 
   local -n db_id="$DB"
   
-  local user="${db_id[0]}"
-  local password="${db_id[1]}"
-  local db="${db_id[2]}"
+  local user="${!db_id[0]}"
+  local password="${!db_id[1]}"
+  local db="${!db_id[2]}"
 
-# Execute SQL commands as the default POSTGRES_USER
+# Create User and Database
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    CREATE USER ${user} WITH PASSWORD '${password}';
-    CREATE DATABASE ${db};
-    GRANT ALL PRIVILEGES ON DATABASE ${db} TO ${user};
-    ALTER DATABASE ${db} OWNER TO ${user};
+    -- Create Database
+    CREATE USER "${user}" WITH PASSWORD '${password}';
+    CREATE DATABASE "${db}" OWNER "${user}";
+    
+    -- Revoke CONNECT on system DBs from PUBLIC (blocks ALL non-superusers)
+    REVOKE CONNECT ON DATABASE "${POSTGRES_DB}" FROM PUBLIC;
+    REVOKE CONNECT ON DATABASE template0 FROM PUBLIC;
+    REVOKE CONNECT ON DATABASE template1 FROM PUBLIC;
+    
+    -- Revoke CONNECT on the new DB from PUBLIC (prevents future non-admin users from connecting)
+    REVOKE CONNECT ON DATABASE "${db}" FROM PUBLIC;
+    
+    -- Explicitly grant CONNECT on the new DB to its designated owner only
+    GRANT CONNECT ON DATABASE "${db}" TO "${user}";
 EOSQL
 
+# Grant privileges inside their specific database
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${db}" <<-EOSQL
+    -- Make the user owner of the public schema inside their database
+    ALTER SCHEMA public OWNER TO "${user}";
 
+    -- Grant schema permissions
+    GRANT ALL ON SCHEMA public TO "${user}";
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${user}";
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${user}";
+
+    -- Ensure future objects created by anyone in this DB are fully accessible by the user
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "${user}";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "${user}";
+EOSQL
 
 done
 
@@ -128,6 +151,10 @@ function _main {
 }
 
 #---------------#
-_testing
-_main
+if _testing; then
+    _main
+else
+    echo "Aborting database setup due to failed tests."
+    exit 1
+fi
 

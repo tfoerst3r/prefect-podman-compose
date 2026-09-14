@@ -5,7 +5,9 @@
 
 set -e
 
-echo "source /init_prefect.sh" >> /root/.bashrc
+if ! grep -qF 'source /init_prefect.sh' /root/.bashrc; then
+    echo "source /init_prefect.sh" >> /root/.bashrc
+fi
 
 INITFOLDER="init_scripts"
 TARGET_DIR="/$INITFOLDER"

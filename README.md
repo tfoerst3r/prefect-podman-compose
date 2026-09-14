@@ -38,10 +38,31 @@ Inside that root directory, start the container in the background.
 podman compose up --detach
 ```
 
-To access the container use `podman exec`:
+To access the **prefect** container use `podman exec`:
 
 ```bash
 podman exec -it $(podman ps -q -f name=prefect) /bin/bash
+```
+
+To access the **postgres** container use `podman exec`:
+
+```bash
+podman exec -it $(podman ps -q -f name=postgres) /bin/bash
+```
+
+To access the postgres shell for each user you can use one of the given.
+
+```bash
+psql -U $POSTGRES_USER -d $POSTGRES_DB
+psql -U ${PREFECT_USER} -d ${PREFECT_DB}
+psql "postgresql://$PREFECT_USER:$PREFECT_PW@localhost:5432/$PREFECT_DB"
+```
+
+This gives an error because the prefect user should not have access to other databases,
+here the `postgres` database.
+
+```
+psql -U $PREFECT_USER -d postgres -c "SELECT 1;"
 ```
 
 <!-- ---- -->
@@ -59,6 +80,7 @@ Now you can run the installed module, which is defined in `src/`:
 ```bash
 poetry run python -m prefectflow
 ```
+
 
 <!-- ---- -->
 

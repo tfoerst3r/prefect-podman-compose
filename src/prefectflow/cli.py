@@ -9,8 +9,8 @@ from prefect import flow, task
 # Update these with your local PostgreSQL database connection details
 DB_CONFIG = {
     "dbname": "prefect_db",
-    "user": "myuser",
-    "password": "mysecretpassword",
+    "user": "myprefectuser",
+    "password": "myprefectPW",
     "host": "localhost",
     "port": 5432,
 }
